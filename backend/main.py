@@ -1,6 +1,5 @@
 """
 命题逻辑自然推理系统 - FastAPI 后端
-端口: 8081
 """
 import asyncio
 import os
