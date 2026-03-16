@@ -1,5 +1,5 @@
 """
-AI 步骤解释模块 - 适配 GMN Responses API (chuangzuoli.com)
+AI 步骤解释模块，相关配置可以根据你的api接入方式修改
 接口格式: POST /v1/responses，使用 input 数组
 """
 import os
