@@ -6,7 +6,7 @@ import os
 import re
 import requests
 
-GMN_URL = "https://gmn.chuangzuoli.com/v1/responses"
+GMN_URL = "..."#按需填写
 # 模型优先级（按可用性排序）
 MODELS = [
     "gpt-5.3-codex",
