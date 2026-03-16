@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>证明助手 - 命题逻辑自然推理系统</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/prover.css?v=20260317b">
+  <!-- KaTeX 本地 -->
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css">
+  <script defer src="/vendor/katex/katex.min.js"></script>
+  <script src="js/analytics.js" defer></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="navbar-logo">
+      <span class="logo-icon">⊢</span>命题逻辑
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="prover.html" class="active">证明助手</a></li>
+      <li><a href="learn.html">学习资料</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container page-content">
+  <div class="prover-layout">
+
+    <!-- ── 左栏：输入面板 ── -->
+    <aside class="input-panel">
+
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">📋 前提（Premises）</div>
+        <div class="card-body">
+          <div class="premises-list" id="premisesList">
+            <div class="premise-row">
+              <input class="form-control premise-input" type="text" placeholder="如: P -> Q" autocomplete="off">
+              <button class="btn btn-ghost btn-sm remove-premise" title="删除">✕</button>
+            </div>
+          </div>
+          <button class="add-premise-btn" id="addPremise">+ 添加前提</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">🎯 证明目标（Goal）</div>
+        <div class="card-body">
+          <input class="form-control" type="text" id="goalInput" placeholder="如: R" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">⚙️ 证明风格</div>
+        <div class="card-body">
+          <select class="form-select" id="styleSelect">
+            <option value="natural_deduction">自然演绎（logicproof 样式）</option>
+            <option value="truth_table">真值表</option>
+            <option value="semantic_tree">语义树（Tableau）</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 符号键盘 -->
+      <div class="sym-keyboard">
+        <div class="sym-kb-header">
+          <span class="sym-kb-label">⌨ 符号键盘</span>
+          <span class="sym-kb-hint">点击插入到光标位置</span>
+        </div>
+        <div class="sym-kb-section">
+          <span class="sym-kb-cat">变量</span>
+          <div class="sym-kb-row">
+            <button class="sym-btn var" onclick="insertSym('P')" title="命题变量 P">P</button>
+            <button class="sym-btn var" onclick="insertSym('Q')" title="命题变量 Q">Q</button>
+            <button class="sym-btn var" onclick="insertSym('R')" title="命题变量 R">R</button>
+            <button class="sym-btn var" onclick="insertSym('S')" title="命题变量 S">S</button>
+            <button class="sym-btn var" onclick="insertSym('A')" title="命题变量 A">A</button>
+            <button class="sym-btn var" onclick="insertSym('B')" title="命题变量 B">B</button>
+            <button class="sym-btn var" onclick="insertSym('C')" title="命题变量 C">C</button>
+          </div>
+        </div>
+        <div class="sym-kb-section">
+          <span class="sym-kb-cat">联结词</span>
+          <div class="sym-kb-row">
+            <button class="sym-btn op" onclick="insertSym('¬')" title="¬ 否定（输入 ~ 或 !）">¬</button>
+            <button class="sym-btn op" onclick="insertSym('∧')" title="∧ 合取（输入 &）">∧</button>
+            <button class="sym-btn op" onclick="insertSym('∨')" title="∨ 析取（输入 |）">∨</button>
+            <button class="sym-btn op" onclick="insertSym('→')" title="→ 蕴含（输入 ->）">→</button>
+            <button class="sym-btn op" onclick="insertSym('↔')" title="↔ 双条件（输入 &lt;->）">↔</button>
+          </div>
+        </div>
+        <div class="sym-kb-section">
+          <span class="sym-kb-cat">特殊</span>
+          <div class="sym-kb-row">
+            <button class="sym-btn sp" onclick="insertSym('⊤')" title="⊤ 永真">⊤</button>
+            <button class="sym-btn sp" onclick="insertSym('⊥')" title="⊥ 永假">⊥</button>
+            <button class="sym-btn sp" onclick="insertSym('⊢')" title="⊢ 语法推出">⊢</button>
+            <button class="sym-btn sp" onclick="insertSym('¬¬')" title="¬¬ 双重否定">¬¬</button>
+          </div>
+        </div>
+        <div class="sym-kb-section">
+          <span class="sym-kb-cat">辅助</span>
+          <div class="sym-kb-row">
+            <button class="sym-btn" onclick="insertSym('(')" title="左括号">(</button>
+            <button class="sym-btn" onclick="insertSym(')')" title="右括号">)</button>
+            <button class="sym-btn util" onclick="symBackspace()" title="退格">⌫</button>
+            <button class="sym-btn util" onclick="symClear()" title="清空">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="proveBtn" style="width:100%;margin-top:.75rem">
+        ⊢ 开始证明
+      </button>
+
+      <div class="syntax-hints">
+        <strong>文本输入映射：</strong>
+        <code>-&gt;</code>→ &nbsp; <code>&amp;</code>∧ &nbsp; <code>|</code>∨ &nbsp;
+        <code>~</code>¬ &nbsp; <code>&lt;-&gt;</code>↔
+      </div>
+
+      <!-- 示例 -->
+      <div class="card" style="margin-top:1rem">
+        <div class="card-header">💡 示例</div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.5rem">
+          <button class="btn btn-secondary btn-sm" onclick="loadExample('mp')">假言推理 MP</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadExample('hs')">假言三段论 HS</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadExample('cp')">条件证明 CP</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadExample('raa')">反证法 RAA</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadExample('dilemma')">构造式两难</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── 右栏：结果面板 ── -->
+    <main class="result-panel">
+
+      <!-- 状态栏 -->
+      <div class="proof-status idle" id="proofStatus">
+        <span class="status-icon">💭</span>
+        <span id="statusText">输入前提和目标后点击"开始证明"</span>
+      </div>
+
+      <div id="errorBox" style="display:none" class="alert alert-error"></div>
+
+      <!-- logicproof 可视化 -->
+      <div class="card" id="proofCard" style="display:none;margin-bottom:1rem">
+        <div class="proof-header" id="proofHeader"></div>
+        <div style="overflow-x:auto;padding:1rem">
+          <table class="logicproof-table" id="proofTable"></table>
+        </div>
+      </div>
+
+      <!-- LaTeX 代码 -->
+      <div id="latexCard" style="display:none" class="card" style="margin-bottom:1rem">
+        <div class="card-header" style="display:flex;align-items:center">
+          <span>📄 LaTeX 代码（logicproof 环境）</span>
+          <div style="margin-left:auto;display:flex;gap:.5rem">
+            <button class="btn btn-sm btn-secondary" id="copyLatex">复制</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:.75rem">
+          <pre class="latex-code" id="latexCode"></pre>
+        </div>
+      </div>
+
+      <!-- 真值表 -->
+      <div id="truthTableCard" style="display:none" class="card">
+        <div class="card-header">📊 真值表</div>
+        <div class="card-body" id="truthTableResult"></div>
+      </div>
+
+      <!-- 语义树 -->
+      <div id="tableauCard" style="display:none" class="card">
+        <div class="card-header">🌲 语义树（Tableau）</div>
+        <div class="card-body" id="tableauResult"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<footer>
+  <p>命题逻辑自然推理系统 &copy; 2025 | logic.jazzzy.cn</p>
+</footer>
+
+<script>
+const API = '/api';
+
+// ── 示例 ──────────────────────────────────────────────
+const EXAMPLES = {
+  mp:      { premises: ['P -> Q', 'P'], goal: 'Q' },
+  hs:      { premises: ['P -> Q', 'Q -> R', 'P'], goal: 'R' },
+  cp:      { premises: ['P -> Q', 'Q -> R'], goal: 'P -> R' },
+  raa:     { premises: ['P -> Q', 'P -> ~Q'], goal: '~P' },
+  dilemma: { premises: ['P | Q', 'P -> R', 'Q -> R'], goal: 'R' },
+};
+
+function loadExample(key) {
+  const ex = EXAMPLES[key];
+  if (!ex) return;
+  document.getElementById('premisesList').innerHTML = '';
+  ex.premises.forEach(p => addPremiseRow(p));
+  document.getElementById('goalInput').value = ex.goal;
+}
+
+// ── 前提管理 ─────────────────────────────────────────
+function addPremiseRow(value = '') {
+  const list = document.getElementById('premisesList');
+  const row = document.createElement('div');
+  row.className = 'premise-row';
+  row.innerHTML = `
+    <input class="form-control premise-input" type="text" placeholder="如: P -> Q"
+           autocomplete="off" value="${value}">
+    <button class="btn btn-ghost btn-sm remove-premise" title="删除">✕</button>
+  `;
+  const input = row.querySelector('input');
+  attachInputTracking(input);
+  row.querySelector('.remove-premise').addEventListener('click', () => {
+    if (document.querySelectorAll('.premise-row').length > 1) row.remove();
+  });
+  list.appendChild(row);
+  if (!value) input.focus();
+}
+
+document.getElementById('addPremise').addEventListener('click', () => addPremiseRow());
+document.querySelector('.remove-premise').addEventListener('click', function() {
+  if (document.querySelectorAll('.premise-row').length > 1)
+    this.closest('.premise-row').remove();
+});
+// 初始前提输入跟踪
+attachInputTracking(document.querySelector('.premise-input'));
+// 目标输入跟踪
+attachInputTracking(document.getElementById('goalInput'));
+
+// ── 证明 ─────────────────────────────────────────────
+document.getElementById('proveBtn').addEventListener('click', prove);
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') prove();
+});
+
+async function prove() {
+  const premises = [...document.querySelectorAll('.premise-input')]
+    .map(el => el.value.trim()).filter(Boolean);
+  const goal = document.getElementById('goalInput').value.trim();
+  const style = document.getElementById('styleSelect').value;
+
+  if (!goal) {
+    showError('请输入证明目标');
+    return;
+  }
+
+  setStatus('idle', '⏳ 证明中...');
+  hideResults();
+  document.getElementById('errorBox').style.display = 'none';
+
+  // 埋点
+  track('proof_submit', style);
+
+  try {
+    const res = await fetch(`${API}/prove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ premises, goal, style }),
+    });
+    if (!res.ok) {
+      let msg = `服务错误 (${res.status})`;
+      try { const d = await res.json(); msg = d.detail || msg; } catch(_) {}
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    renderResult(data, premises, goal);
+  } catch(e) {
+    showError(e.message);
+    setStatus('idle', '证明失败');
+  }
+}
+
+function hideResults() {
+  ['proofCard','latexCard','truthTableCard','tableauCard'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+}
+
+function renderResult(data, premises, goal) {
+  const { style, result } = data;
+  if (style === 'natural_deduction') {
+    if (result.success) {
+      setStatus('success', `✅ 证明成功！共 ${result.steps.length} 步`);
+    } else {
+      setStatus('failure', '❌ ' + result.message);
+    }
+    renderLogicproof(result.steps, premises, goal);
+    renderLatexCode(result.steps, premises, goal);
+  } else if (style === 'truth_table') {
+    const r = result;
+    setStatus(r.is_valid ? 'success' : 'failure',
+      r.is_valid ? '✅ 论证有效（真值表验证）' : '❌ 论证无效（存在反例）');
+    renderTruthTable(r);
+  } else if (style === 'semantic_tree') {
+    const r = result;
+    setStatus(r.valid ? 'success' : 'failure',
+      r.valid ? '✅ 有效（所有分支封闭）' : '❌ 无效（存在开放分支）');
+    renderTableau(r);
+  }
+}
+
+// ── logicproof 风格渲染 ───────────────────────────────
+function renderLogicproof(steps, premises, goal) {
+  const card = document.getElementById('proofCard');
+  card.style.display = '';
+
+  const header = document.getElementById('proofHeader');
+  header.innerHTML = '';
+  const headerFormula = document.createElement('span');
+  headerFormula.className = 'katex-render';
+  const premisesLatex = steps
+    .filter(s => s.rule === 'premise')
+    .map(s => s.latex).join(', ');
+  const sequent = premisesLatex
+    ? `${premisesLatex} \\vdash ${steps[steps.length-1]?.latex || goal}`
+    : `\\vdash ${steps[steps.length-1]?.latex || goal}`;
+  try {
+    katex.render(sequent, headerFormula, { throwOnError: false });
+  } catch(e) {
+    headerFormula.textContent = premises.length
+      ? `${premises.join(', ')} ⊢ ${goal}`
+      : `⊢ ${goal}`;
+  }
+  header.appendChild(headerFormula);
+
+  const table = document.getElementById('proofTable');
+  table.innerHTML = '';
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+
+  const premiseCount = steps.filter(s => s.rule === 'premise').length;
+
+  steps.forEach((step, idx) => {
+    const tr = document.createElement('tr');
+    tr.id = `step-row-${step.line}`;
+
+    const indent = step.depth * 1.5;
+
+    const tdNum = document.createElement('td');
+    tdNum.className = 'col-num';
+    tdNum.textContent = step.line + '.';
+    tr.appendChild(tdNum);
+
+    // 嵌套竖线列（每层深度一个 span，在 addSubproofBorders 中填充）
+    const tdBars = document.createElement('td');
+    tdBars.className = 'col-bars';
+    tdBars.dataset.depth = step.depth;
+    tr.appendChild(tdBars);
+
+    const tdFormula = document.createElement('td');
+    tdFormula.className = 'col-formula';
+    const formulaSpan = document.createElement('span');
+    try {
+      katex.render(step.latex || step.formula, formulaSpan, { throwOnError: false });
+    } catch(e) {
+      formulaSpan.textContent = step.formula;
+    }
+    tdFormula.appendChild(formulaSpan);
+    tr.appendChild(tdFormula);
+
+    const tdRule = document.createElement('td');
+    tdRule.className = 'col-rule';
+    tdRule.innerHTML = formatRule(step);
+    tr.appendChild(tdRule);
+
+    const tdExp = document.createElement('td');
+    tdExp.className = 'col-explain';
+    if (step.rule !== 'premise') {
+      const btn = document.createElement('button');
+      btn.className = 'btn-explain';
+      btn.textContent = '解释';
+      btn.dataset.line = step.line;
+      btn.onclick = () => handleExplain(step, steps, premises, goal, btn, tr);
+      tdExp.appendChild(btn);
+    }
+    tr.appendChild(tdExp);
+
+    tbody.appendChild(tr);
+
+    if (step.rule === 'premise' && idx === premiseCount - 1) {
+      const sepRow = document.createElement('tr');
+      sepRow.className = 'premise-separator';
+      const sepTd = document.createElement('td');
+      sepTd.colSpan = 4;
+      sepRow.appendChild(sepTd);
+      tbody.appendChild(sepRow);
+    }
+  });
+
+  addSubproofBorders(tbody, steps);
+  // 等浏览器完成表格布局后，将各行竖线 span 的高度设为行高
+  requestAnimationFrame(() => {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const barsTd = tr.querySelector('.col-bars');
+      if (!barsTd) return;
+      const spans = barsTd.querySelectorAll('.subproof-bar');
+      if (!spans.length) return;
+      const h = tr.offsetHeight;
+      spans.forEach(s => { s.style.height = h + 'px'; });
+    });
+  });
+  attachRuleTips();
+}
+
+function formatRule(step) {
+  const rule = step.rule;
+  if (rule === 'premise') return 'premise';
+  if (rule === 'assumption') return 'assumption';
+
+  // →-intro / ¬-intro / RAA: from_lines=[start,end] 用范围格式 n-m
+  // ∨-elim 子证明: from_lines=[disj, c1_start, c1_end, c2_start, c2_end]
+  const isSubproofRule = ['→-intro', '¬-intro', 'RAA'].includes(rule);
+  let refs = '';
+  if (step.from_lines.length) {
+    if (rule === '∨-elim' && step.from_lines.length === 5) {
+      const [d, c1s, c1e, c2s, c2e] = step.from_lines;
+      refs = ` <span class="rule-refs">${d}, ${c1s}-${c1e}, ${c2s}-${c2e}</span>`;
+    } else if (isSubproofRule && step.from_lines.length === 2) {
+      refs = ` <span class="rule-refs">${step.from_lines[0]}-${step.from_lines[1]}</span>`;
+    } else {
+      refs = ` <span class="rule-refs">${step.from_lines.join(', ')}</span>`;
+    }
+  }
+
+  // 规则名直接使用后端标准名称
+  return `<span class="rule-name" data-rule="${rule}">${rule}</span>${refs}`;
+}
+
+function addSubproofBorders(tbody, steps) {
+  steps.forEach((step, i) => {
+    if (step.depth === 0) return;
+    const row = tbody.querySelector(`#step-row-${step.line}`);
+    if (!row) return;
+    const tdBars = row.querySelector('.col-bars');
+    if (!tdBars) return;
+
+    // 每个深度层级渲染一个竖线 span，并判断是否需要顶/底封口
+    for (let d = 1; d <= step.depth; d++) {
+      const isStart = (i === 0 || steps[i - 1].depth < d);
+      const isEnd   = (i === steps.length - 1 || steps[i + 1].depth < d);
+      const span = document.createElement('span');
+      let cls = 'subproof-bar';
+      if (isStart) cls += ' bar-start';
+      if (isEnd)   cls += ' bar-end';
+      span.className = cls;
+      tdBars.appendChild(span);
+    }
+  });
+}
+
+async function handleExplain(step, allSteps, premises, goal, btn, tr) {
+  const nextRow = tr.nextElementSibling;
+  if (nextRow && nextRow.classList.contains('ai-row')) {
+    nextRow.remove();
+    return;
+  }
+
+  const orig = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  // 埋点
+  track('ai_explain', `line-${step.line}`);
+
+  try {
+    const res = await fetch(`${API}/explain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ step, all_steps: allSteps, premises, goal }),
+    });
+    if (!res.ok) {
+      let msg = `AI 解释服务错误 (${res.status})`;
+      try { const d = await res.json(); msg = d.detail || msg; } catch(_) {}
+      throw new Error(msg);
+    }
+    const data = await res.json();
+
+    const expRow = document.createElement('tr');
+    expRow.className = 'ai-row';
+    const expTd = document.createElement('td');
+    expTd.colSpan = 4;
+    expTd.innerHTML = `🤖 <strong>AI 解释：</strong>${data.explanation}`;
+    expRow.appendChild(expTd);
+    tr.insertAdjacentElement('afterend', expRow);
+  } catch(e) {
+    alert('AI 解释失败：' + e.message);
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
+// ── LaTeX logicproof 导出 ──────────────────────────────
+function renderLatexCode(steps, premises, goal) {
+  const maxDepth = Math.max(...steps.map(s => s.depth));
+  const lines = [];
+
+  lines.push('% 需要: \\usepackage{logicproof}');
+  lines.push('% 可选: \\usepackage{amssymb,amsmath}');
+  lines.push('');
+
+  const premiseLatex = steps.filter(s => s.rule === 'premise').map(s => s.latex).join(', ');
+  const goalLatex = steps[steps.length - 1]?.latex || '';
+  lines.push(`\\[`);
+  lines.push(`  ${premiseLatex ? premiseLatex + ' ' : ''}\\vdash ${goalLatex}`);
+  lines.push(`\\]`);
+  lines.push('');
+  lines.push(`\\begin{logicproof}{${Math.max(maxDepth, 1)}}`);
+
+  let currentDepth = 0;
+  steps.forEach((step, i) => {
+    const indent = '  '.repeat(step.depth + 1);
+    const latex = step.latex || step.formula;
+    const rule = formatLatexRule(step);
+
+    if (step.is_assumption && step.depth > currentDepth) {
+      lines.push(`${'  '.repeat(currentDepth + 1)}\\begin{subproof}`);
+      currentDepth = step.depth;
+    }
+
+    lines.push(`${indent}${latex} & ${rule} \\\\`);
+
+    const nextStep = steps[i + 1];
+    if (nextStep && nextStep.depth < step.depth) {
+      const closeDepth = step.depth;
+      for (let d = closeDepth; d > nextStep.depth; d--) {
+        lines.push(`${'  '.repeat(d)}\\end{subproof}`);
+      }
+      currentDepth = nextStep.depth;
+    }
+  });
+
+  for (let d = currentDepth; d > 0; d--) {
+    lines.push(`${'  '.repeat(d)}\\end{subproof}`);
+  }
+
+  lines.push('\\end{logicproof}');
+
+  const code = lines.join('\n');
+  const highlighted = code
+    .replace(/(\\begin|\\end)/g, '<span class="lp-kw">$1</span>')
+    .replace(/\{(logicproof|subproof)\}/g, '{<span class="lp-env">$1</span>}')
+    .replace(/\\vdash|\\lor|\\land|\\lnot|\\to|\\rightarrow|\\leftrightarrow|\\bot/g,
+      m => `<span class="lp-math">${m}</span>`)
+    .replace(/& (premise|assumption|→-elim|MT|HS|DS|∧-intro|∧-elim_[lr]|∨-intro|∨-elim|¬¬-elim|¬¬-intro|¬-elim|¬-intro|RAA|↔-elim)[^\\]*/g,
+      m => `<span class="lp-rule">${m}</span>`);
+
+  document.getElementById('latexCode').innerHTML = highlighted;
+  document.getElementById('latexCard').style.display = '';
+}
+
+function formatLatexRule(step) {
+  const r = step.rule;
+  const isSubproofRule = ['→-intro', '¬-intro', 'RAA'].includes(r);
+  let refs = '';
+  if (step.from_lines.length) {
+    if (r === '∨-elim' && step.from_lines.length === 5) {
+      const [d, c1s, c1e, c2s, c2e] = step.from_lines;
+      refs = ` ${d}, ${c1s}--${c1e}, ${c2s}--${c2e}`;
+    } else if (isSubproofRule && step.from_lines.length === 2) {
+      refs = ` ${step.from_lines[0]}--${step.from_lines[1]}`;
+    } else {
+      refs = ` ${step.from_lines.join(', ')}`;
+    }
+  }
+  const ruleMap = {
+    'premise': 'premise', 'assumption': 'assumption',
+    '→-elim': `$\\to$-elim${refs}`, 'MT': `MT${refs}`,
+    'HS': `HS${refs}`, 'DS': `DS${refs}`,
+    '∧-intro': `$\\land$-intro${refs}`,
+    '∧-elim_l': `$\\land$-elim$_l$${refs}`,
+    '∧-elim_r': `$\\land$-elim$_r$${refs}`,
+    '∨-intro': `$\\lor$-intro${refs}`, '∨-elim': `$\\lor$-elim${refs}`,
+    '¬¬-elim': `$\\lnot\\lnot$-elim${refs}`,
+    '¬¬-intro': `$\\lnot\\lnot$-intro${refs}`,
+    '¬-elim': `$\\lnot$-elim${refs}`,
+    '¬-intro': `$\\lnot$-intro${refs}`,
+    'RAA': `RAA${refs}`,
+    '→-intro': `$\\to$-intro${refs}`,
+    '↔-elim': `$\\leftrightarrow$-elim${refs}`,
+  };
+  return ruleMap[r] || `${r}${refs}`;
+}
+
+document.getElementById('copyLatex').addEventListener('click', () => {
+  const el = document.getElementById('latexCode');
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyLatex');
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => btn.textContent = '复制', 2000);
+  });
+});
+
+// ── 真值表渲染 ────────────────────────────────────────
+function renderTruthTable(result) {
+  document.getElementById('truthTableCard').style.display = '';
+  const div = document.getElementById('truthTableResult');
+  const { atoms, rows, is_valid, summary } = result;
+
+  let html = `<div class="alert ${is_valid ? 'alert-success' : 'alert-error'}" style="margin-bottom:1rem">${summary}</div>`;
+  html += '<div class="truth-table"><table><thead><tr>';
+  atoms.forEach(a => html += `<th>${a}</th>`);
+  if (rows[0]) Object.keys(rows[0].premises).forEach(p => html += `<th>${p}</th>`);
+  html += '<th><strong>结论</strong></th></tr></thead><tbody>';
+
+  rows.forEach(row => {
+    const cls = !row.valid_row ? 'counter-ex' : row.all_premises_true ? 'all-true' : '';
+    html += `<tr class="${cls}">`;
+    atoms.forEach(a => html += `<td class="${row.values[a] ? 'tv-true' : 'tv-false'}">${row.values[a] ? 'T' : 'F'}</td>`);
+    Object.values(row.premises).forEach(v => html += `<td class="${v ? 'tv-true' : 'tv-false'}">${v ? 'T' : 'F'}</td>`);
+    html += `<td class="${row.goal ? 'tv-true' : 'tv-false'}"><strong>${row.goal ? 'T' : 'F'}</strong></td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  div.innerHTML = html;
+}
+
+// ── 语义树渲染 ─────────────────────────────────────────
+function renderTableau(result) {
+  document.getElementById('tableauCard').style.display = '';
+  const div = document.getElementById('tableauResult');
+  let html = `<div class="alert ${result.valid ? 'alert-success' : 'alert-error'}" style="margin-bottom:1rem">${result.summary}</div>`;
+  html += '<ol style="margin-left:1.5rem;font-size:.9375rem;line-height:2;color:var(--text-muted)">';
+  (result.steps || []).forEach(s => {
+    html += `<li>${s.action}${s.reason ? '：' + s.reason : ''}</li>`;
+  });
+  html += '</ol>';
+  div.innerHTML = html;
+}
+
+// ── 工具函数 ──────────────────────────────────────────
+function setStatus(type, text) {
+  const el = document.getElementById('proofStatus');
+  el.className = `proof-status ${type}`;
+  document.getElementById('statusText').textContent = text;
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = '错误：' + msg;
+  box.style.display = '';
+}
+
+// ── 符号键盘 ────────────────────────────────────────────
+let activeInput = null;
+
+function attachInputTracking(input) {
+  input.addEventListener('focus', () => {
+    document.querySelectorAll('.sym-active').forEach(el => el.classList.remove('sym-active'));
+    activeInput = input;
+    input.classList.add('sym-active');
+  });
+  // 符号插入追踪
+  input.addEventListener('input', () => {
+    track('sym_insert', 'manual');
+  });
+}
+
+function insertSym(sym) {
+  if (!activeInput || !document.contains(activeInput)) {
+    const inputs = document.querySelectorAll('.premise-input, #goalInput');
+    activeInput = inputs[inputs.length - 1];
+  }
+  if (!activeInput) return;
+
+  const start = activeInput.selectionStart ?? activeInput.value.length;
+  const end = activeInput.selectionEnd ?? start;
+  const val = activeInput.value;
+  activeInput.value = val.substring(0, start) + sym + val.substring(end);
+  const newPos = start + sym.length;
+  activeInput.setSelectionRange(newPos, newPos);
+  activeInput.focus();
+
+  // 符号键盘插入追踪
+  track('sym_insert', sym);
+}
+
+function symBackspace() {
+  if (!activeInput) return;
+  const start = activeInput.selectionStart;
+  const end = activeInput.selectionEnd;
+  if (start === end && start > 0) {
+    const val = activeInput.value;
+    activeInput.value = val.substring(0, start - 1) + val.substring(end);
+    activeInput.setSelectionRange(start - 1, start - 1);
+  } else if (start !== end) {
+    insertSym('');
+  }
+  activeInput.focus();
+}
+
+function symClear() {
+  if (!activeInput) return;
+  activeInput.value = '';
+  activeInput.focus();
+}
+
+// ── 规则提示 ─────────────────────────────────────────────
+const RULE_TIPS = {
+  '→-elim':  { formal: 'P → Q    P\n─────────────\n      Q', desc: '→-elim (Modus Ponens)：蕴含关系与前件均成立，推出后件。' },
+  'MT':      { formal: 'P → Q    ¬Q\n──────────────\n      ¬P', desc: 'MT (Modus Tollens)：蕴含关系与后件的否定均成立，推出前件的否定。' },
+  'HS':      { formal: 'P → Q    Q → R\n──────────────────\n      P → R', desc: 'HS (Hypothetical Syllogism)：蕴含链接，得到首尾蕴含。' },
+  'DS':      { formal: 'P ∨ Q    ¬P\n──────────────\n       Q', desc: 'DS (Disjunctive Syllogism)：析取成立且一支不成立，另一支必然成立。' },
+  '∧-intro': { formal: '   P    Q\n───────────\n    P ∧ Q', desc: '∧-intro：两个命题分别成立，合并为合取式。' },
+  '∧-elim_l': { formal: '  P ∧ Q\n────────\n    P', desc: '∧-elim_l：从合取式提取左支。' },
+  '∧-elim_r': { formal: '  P ∧ Q\n────────\n    Q', desc: '∧-elim_r：从合取式提取右支。' },
+  '∨-intro': { formal: '    P\n──────────\n  P ∨ Q', desc: '∨-intro：命题成立时可加入任意析取支。' },
+  '∨-elim':  { formal: 'P∨Q  P→R  Q→R\n────────────────\n       R', desc: '∨-elim (分情况讨论)：两支都导向同一结论。' },
+  '¬¬-elim': { formal: '  ¬¬P\n───────\n   P', desc: '¬¬-elim：双重否定消除，¬¬P 等价于 P。' },
+  '¬¬-intro': { formal: '   P\n───────\n  ¬¬P', desc: '¬¬-intro：双重否定引入，P 可得 ¬¬P。' },
+  '→-intro': { formal: '[假设 P]\n    ⋮\n    Q\n──────────\n  P → Q', desc: '→-intro (条件证明)：在假设 P 下推出 Q，则得到 P→Q。' },
+  '¬-intro': { formal: '[假设 α]\n    ⋮\n    ⊥\n──────────\n   ¬α', desc: '¬-intro：假设 α 导出矛盾 ⊥，故 ¬α 为真。' },
+  'RAA':     { formal: '[假设 ¬P]\n    ⋮\n    ⊥\n──────────\n   P', desc: 'RAA (反证法)：假设 ¬P 导出矛盾，故 P 为真。' },
+  '↔-elim':  { formal: '  P ↔ Q\n──────────\n  P→Q 且 Q→P', desc: '↔-elim：从 P↔Q 分别提取正向和逆向蕴含。' },
+  '¬-elim':  { formal: '  P    ¬P\n───────────\n      ⊥', desc: '¬-elim：P 与 ¬P 同时成立得矛盾 ⊥。' },
+};
+
+let tipEl = null;
+
+function showRuleTip(ruleName, el) {
+  const info = RULE_TIPS[ruleName];
+  if (!info) return;
+  removeRuleTip();
+  tipEl = document.createElement('div');
+  tipEl.className = 'rule-tip';
+  tipEl.innerHTML = `<div class="tip-formal">${info.formal}</div><div class="tip-desc">${info.desc}</div>`;
+  document.body.appendChild(tipEl);
+  const rect = el.getBoundingClientRect();
+  const x = Math.min(rect.left, window.innerWidth - 300);
+  const y = rect.bottom + 6;
+  tipEl.style.left = x + 'px';
+  tipEl.style.top = y + 'px';
+}
+
+function removeRuleTip() {
+  if (tipEl) { tipEl.remove(); tipEl = null; }
+}
+
+function attachRuleTips() {
+  document.querySelectorAll('.rule-name[data-rule]').forEach(el => {
+    el.addEventListener('mouseenter', () => showRuleTip(el.dataset.rule, el));
+    el.addEventListener('mouseleave', removeRuleTip);
+  });
+}
+
+// URL 参数预填（支持外部链接直接传入前提和目标）
+const params = new URLSearchParams(location.search);
+if (params.get('premises')) {
+  try {
+    const ps = JSON.parse(params.get('premises'));
+    document.getElementById('premisesList').innerHTML = '';
+    ps.forEach(p => addPremiseRow(p));
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

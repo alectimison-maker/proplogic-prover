@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>命题逻辑自然推理系统</title>
+  <link rel="stylesheet" href="css/main.css">
+  <script src="js/analytics.js" defer></script>
+  <style>
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      padding: 5.5rem 1.5rem 5rem;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.35) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(6,182,212,0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .375rem;
+      padding: .3rem .875rem;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.35);
+      border-radius: 999px;
+      font-size: .8125rem;
+      color: var(--primary-light);
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(8px);
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -.02em;
+      background: linear-gradient(135deg, #f0f0ff 0%, var(--primary-light) 40%, var(--accent-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.15;
+    }
+    .hero p {
+      font-size: 1.125rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.75;
+    }
+    .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── 功能卡片 ── */
+    .features { padding: 5rem 0; }
+    .section-title {
+      text-align: center;
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+      color: var(--text);
+    }
+    .section-lead {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 3rem;
+      font-size: 1rem;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      text-align: center;
+      transition: transform .25s, box-shadow .25s, border-color .25s;
+      text-decoration: none;
+      color: inherit;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg), var(--glow-primary);
+      border-color: var(--glass-border-bright);
+      text-decoration: none;
+      color: var(--text);
+    }
+    .feature-icon {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.875rem;
+      margin: 0 auto 1.25rem;
+    }
+    .feature-card h3 { font-size: 1.0625rem; margin-bottom: .5rem; color: var(--text); }
+    .feature-card p { color: var(--text-muted); font-size: .9rem; line-height: 1.65; }
+
+    /* ── 快速上手 ── */
+    .quickstart {
+      padding: 5rem 0;
+      position: relative;
+    }
+    .quickstart::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(124,58,237,0.04);
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      pointer-events: none;
+    }
+
+    .steps-list { display: flex; gap: 2rem; flex-wrap: wrap; position: relative; z-index: 1; }
+    .step-item { flex: 1; min-width: 200px; }
+    .step-num {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.125rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--glow-primary);
+    }
+    .step-item h3 { font-size: 1rem; margin-bottom: .375rem; color: var(--text); }
+    .step-item p { font-size: .9rem; color: var(--text-muted); line-height: 1.65; }
+
+    /* ── 介绍区 ── */
+    .intro { padding: 5rem 0; }
+    .intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+    .intro h2 { font-size: 1.75rem; margin-bottom: 1rem; color: var(--text); }
+    .intro p { color: var(--text-muted); margin-bottom: 1rem; line-height: 1.75; }
+
+    /* 公式演示卡片 */
+    .intro-formula {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      font-family: 'CMU Serif', Georgia, monospace;
+      text-align: center;
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--shadow-lg);
+    }
+    .formula-line {
+      padding: .4rem 0;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+      color: var(--text);
+    }
+    .formula-line:last-child { border-bottom: none; }
+    .formula-divider {
+      border-top: 2px solid rgba(167,139,250,0.4);
+      margin: .5rem 0;
+    }
+    .formula-tag {
+      font-size: .75rem;
+      color: var(--text-light);
+      font-family: system-ui, sans-serif;
+      min-width: 3rem;
+      text-align: right;
+    }
+
+    @media (max-width: 768px) {
+      .intro-grid { grid-template-columns: 1fr; }
+      .steps-list { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="navbar-logo">
+      <span class="logo-icon">⊢</span>
+      命题逻辑
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index.html" class="active">首页</a></li>
+      <li><a href="prover.html">证明助手</a></li>
+      <li><a href="learn.html">学习资料</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">✦ 基于 FastAPI + Claude AI</div>
+    <h1>命题逻辑<br>自然推理系统</h1>
+    <p>输入前提和目标，系统自动生成严格的逻辑证明步骤，并提供 AI 解释。支持自然演绎、真值表、语义树三种证明方式。</p>
+    <div class="hero-btns">
+      <a href="prover.html" class="btn btn-primary btn-lg">⊢ 开始证明</a>
+      <a href="learn.html" class="btn btn-secondary btn-lg">📚 学习资料</a>
+    </div>
+  </div>
+</section>
+
+<!-- 功能入口 -->
+<section class="features">
+  <div class="container">
+    <h2 class="section-title">核心功能</h2>
+    <p class="section-lead">从学习到实践，完整的命题逻辑学习与验证平台</p>
+    <div class="feature-grid">
+      <a href="prover.html" class="feature-card">
+        <div class="feature-icon" style="background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(139,92,246,.1));border:1px solid rgba(124,58,237,.3)">⊢</div>
+        <h3>自动证明助手</h3>
+        <p>输入前提和目标，自动生成完整证明步骤，支持三种证明方法</p>
+      </a>
+      <a href="learn.html" class="feature-card">
+        <div class="feature-icon" style="background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(34,211,238,.08));border:1px solid rgba(6,182,212,.3)">📚</div>
+        <h3>系统学习资料</h3>
+        <p>基础符号、推理规则、经典例题，系统化学习命题逻辑</p>
+      </a>
+      <a href="prover.html" class="feature-card">
+        <div class="feature-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(251,191,36,.08));border:1px solid rgba(245,158,11,.3)">📊</div>
+        <h3>真值表验证</h3>
+        <p>自动生成真值表，直观验证论证有效性，找出反例</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- 快速上手 -->
+<section class="quickstart">
+  <div class="container">
+    <h2 class="section-title">3步快速上手</h2>
+    <div class="steps-list" style="margin-top:2rem">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <h3>输入前提</h3>
+        <p>在证明助手中输入已知条件，支持 <code style="font-family:monospace;color:var(--primary-light)">-></code>、<code style="font-family:monospace;color:var(--primary-light)">&</code>、<code style="font-family:monospace;color:var(--primary-light)">|</code>、<code style="font-family:monospace;color:var(--primary-light)">~</code> 等符号</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <h3>设定目标</h3>
+        <p>输入希望证明的结论公式，选择证明风格（自然演绎 / 真值表 / 语义树）</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <h3>查看证明</h3>
+        <p>系统自动生成逐步证明，点击每步的"解释"按钮获得 AI 讲解</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 介绍 -->
+<section class="intro">
+  <div class="container">
+    <div class="intro-grid">
+      <div>
+        <h2>什么是命题逻辑？</h2>
+        <p>命题逻辑（Propositional Logic）是数理逻辑的基础分支，研究命题之间的逻辑关系。命题是可以判断真假的陈述句。</p>
+        <p>通过逻辑联结词（否定、合取、析取、蕴含、双条件），我们可以构造复杂的逻辑公式，并运用推理规则进行严格的演绎推理。</p>
+        <p>命题逻辑广泛应用于数学证明、程序验证、人工智能推理等领域。</p>
+        <a href="learn.html" class="btn btn-primary" style="margin-top:.5rem">系统学习 →</a>
+      </div>
+      <div class="intro-formula">
+        <div class="formula-line">
+          <span>P → Q</span><span class="formula-tag">前提1</span>
+        </div>
+        <div class="formula-line">
+          <span>Q → R</span><span class="formula-tag">前提2</span>
+        </div>
+        <div class="formula-line" style="border-bottom:none">
+          <span>P</span><span class="formula-tag">前提3</span>
+        </div>
+        <div class="formula-divider"></div>
+        <div class="formula-line">
+          <span>P → R</span><span class="formula-tag">HS</span>
+        </div>
+        <div class="formula-line" style="border-bottom:none">
+          <span style="color:var(--success-light);font-weight:700">R</span>
+          <span class="formula-tag">MP ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer>
+  <p>命题逻辑自然推理系统 &copy; 2025 | logic.jazzzy.cn | Powered by FastAPI + Claude AI</p>
+</footer>
+
+</body>
+</html>

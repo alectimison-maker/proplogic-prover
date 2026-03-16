@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学习资料 - 命题逻辑自然推理系统</title>
+  <link rel="stylesheet" href="css/main.css">
+  <!-- KaTeX 本地 -->
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css">
+  <script defer src="/vendor/katex/katex.min.js"></script>
+  <script src="js/analytics.js" defer></script>
+  <style>
+    .learn-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .sidebar {
+      position: sticky;
+      top: 76px;
+    }
+    .sidebar .card-body { padding: .5rem; }
+    .toc-item {
+      display: block;
+      padding: .5rem .875rem;
+      border-radius: var(--radius);
+      font-size: .9375rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .toc-item:hover {
+      background: rgba(124,58,237,0.1);
+      color: var(--primary-light);
+    }
+    .toc-item.active {
+      background: rgba(124,58,237,0.15);
+      color: var(--primary);
+      border: 1px solid var(--glass-border);
+    }
+
+    .content-area { min-height: 60vh; }
+    .content-area h1 {
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: .75rem;
+      border-bottom: 1px solid var(--glass-border);
+      color: var(--text);
+      background: linear-gradient(135deg, var(--text) 0%, var(--primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .content-area h2 {
+      font-size: 1.25rem;
+      margin: 1.75rem 0 .75rem;
+      color: var(--primary-light);
+    }
+    .content-area h3 { font-size: 1.0625rem; margin: 1.25rem 0 .5rem; color: var(--text); }
+    .content-area p { margin-bottom: .875rem; line-height: 1.75; color: var(--text-muted); }
+    .content-area code {
+      font-family: monospace;
+      background: rgba(124,58,237,0.12);
+      color: var(--primary-light);
+      padding: .1em .4em;
+      border-radius: 4px;
+      font-size: .9em;
+      border: 1px solid rgba(124,58,237,0.2);
+    }
+    .content-area pre {
+      background: #050510;
+      color: #94a3b8;
+      border-radius: var(--radius);
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid rgba(124,58,237,0.2);
+    }
+    .content-area pre code { background: none; color: inherit; padding: 0; border: none; }
+    .content-area table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+      font-size: .9375rem;
+    }
+    .content-area th {
+      background: rgba(124,58,237,0.1);
+      padding: .5rem .875rem;
+      border: 1px solid var(--glass-border);
+      text-align: center;
+      color: var(--primary-light);
+      font-weight: 600;
+    }
+    .content-area td {
+      padding: .375rem .875rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .content-area ul, .content-area ol {
+      margin-left: 1.5rem;
+      margin-bottom: .875rem;
+      color: var(--text-muted);
+    }
+    .content-area li { margin-bottom: .25rem; }
+    .content-area blockquote {
+      border-left: 3px solid var(--primary);
+      padding-left: 1rem;
+      color: var(--text-muted);
+      margin: 1rem 0;
+      background: rgba(124,58,237,0.05);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: .75rem 1rem;
+    }
+    .content-area strong { color: var(--text); }
+    .content-area a { color: var(--accent-light); }
+    .content-area a:hover { color: var(--accent); }
+    .loading-hint { text-align: center; padding: 2rem; color: var(--text-muted); }
+
+    /* ── 真值表 ─────────────────────────────── */
+    .truth-table {
+      border-collapse: collapse;
+      width: auto;
+      margin: 1rem auto;
+      font-family: 'Consolas', 'SF Mono', monospace;
+      font-size: .9375rem;
+    }
+    .truth-table th {
+      background: rgba(124,58,237,0.15);
+      color: var(--primary-light);
+      padding: .5rem 1rem;
+      border: 1px solid rgba(124,58,237,0.3);
+      text-align: center;
+      font-weight: 600;
+    }
+    .truth-table td {
+      padding: .375rem 1rem;
+      border: 1px solid rgba(124,58,237,0.2);
+      text-align: center;
+      color: var(--text-muted);
+      background: rgba(5,5,16,0.5);
+    }
+    .truth-table .val-true { color: var(--success); font-weight: 600; }
+    .truth-table .val-false { color: var(--error); font-weight: 600; }
+
+    /* ── 推理规则 ─────────────────────────────── */
+    .inference-rule {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.25rem 0;
+      padding: 1rem;
+      background: rgba(5,5,16,0.4);
+      border-radius: var(--radius);
+      border: 1px solid rgba(124,58,237,0.15);
+    }
+    .inference-rule .ir-frac {
+      font-size: 1.1rem;
+    }
+    .inference-rule .ir-name {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: .9375rem;
+      font-family: system-ui, sans-serif;
+      white-space: nowrap;
+    }
+    .inference-rule-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      margin: 1.25rem 0;
+    }
+    .inference-rule-group .inference-rule {
+      margin: 0;
+      flex: 0 1 auto;
+    }
+
+    /* ── 证明步骤（logicproof 风格）───────────── */
+    .learn-proof {
+      border-collapse: collapse;
+      width: auto;
+      margin: 1rem 0;
+      font-family: 'CMU Serif', 'STIX Two Math', Georgia, serif;
+      font-size: .9375rem;
+    }
+    .learn-proof td {
+      padding: .25rem .4rem;
+      vertical-align: middle;
+      white-space: nowrap;
+      border: none;
+      text-align: left;
+    }
+    .learn-proof .pl-num {
+      width: 2.25rem;
+      text-align: right;
+      color: rgba(167,139,250,0.5);
+      font-size: .8125rem;
+      padding-right: .625rem;
+      font-family: monospace;
+    }
+    .learn-proof .pl-bars {
+      padding: 0 .125rem 0 0;
+      width: auto;
+      height: 1px; /* 让子元素 height:100% 继承行高 */
+    }
+    .learn-proof .pl-bars .subproof-bar {
+      display: inline-block;
+      width: .875rem;
+      height: 100%;
+      border-left: 2.5px solid rgba(167,139,250,0.55);
+      box-sizing: border-box;
+    }
+    .learn-proof .pl-bars .subproof-bar.bar-start {
+      border-top: 2.5px solid rgba(167,139,250,0.55);
+    }
+    .learn-proof .pl-bars .subproof-bar.bar-end {
+      border-bottom: 2.5px solid rgba(167,139,250,0.55);
+    }
+    .learn-proof .pl-formula {
+      color: var(--text);
+      min-width: 120px;
+    }
+    .learn-proof .pl-rule {
+      color: var(--text-muted);
+      font-size: .8125rem;
+      padding-left: 1.25rem;
+      font-family: system-ui, 'Noto Sans SC', sans-serif;
+    }
+    .learn-proof .pl-rule .rule-name {
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .learn-proof .premise-sep td {
+      border-bottom: 2px solid rgba(167,139,250,0.4);
+      padding-bottom: .3rem;
+    }
+    .learn-proof .assumption-line .pl-formula {
+      color: var(--primary-light);
+    }
+
+    @media (max-width: 768px) {
+      .learn-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="navbar-logo">
+      <span class="logo-icon">⊢</span>命题逻辑
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="prover.html">证明助手</a></li>
+      <li><a href="learn.html" class="active">学习资料</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container page-content">
+  <div class="learn-layout">
+
+    <!-- 侧边栏目录 -->
+    <aside class="sidebar">
+      <div class="card">
+        <div class="card-header">📚 目录</div>
+        <div class="card-body" id="toc"></div>
+      </div>
+    </aside>
+
+    <!-- 内容区 -->
+    <main class="card">
+      <div class="card-body content-area" id="contentArea">
+        <div class="loading-hint">
+          <div class="spinner"></div>
+          <p>加载中...</p>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<footer>
+  <p>命题逻辑自然推理系统 &copy; 2025 | logic.jazzzy.cn</p>
+</footer>
+
+<script>
+const API = '/api';
+
+const TOC = [
+  { key: '01-basics', label: '命题逻辑基础' },
+  { key: '02-conjunction', label: '∧ 合取规则' },
+  { key: '03-double-negation', label: '¬¬ 双重否定' },
+  { key: '04-implication-elim', label: '→-elim 蕴含消除' },
+  { key: '05-implication-intro', label: '→-intro 条件证明' },
+  { key: '06-disjunction', label: '∨ 析取规则' },
+  { key: '07-negation', label: '¬ 否定规则' },
+];
+
+let currentKey = '';
+
+function renderToc() {
+  const tocEl = document.getElementById('toc');
+  TOC.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'toc-item';
+    btn.textContent = item.label;
+    btn.onclick = () => loadContent(item.key);
+    btn.id = `toc-${item.key}`;
+    tocEl.appendChild(btn);
+  });
+}
+
+async function loadContent(key) {
+  currentKey = key;
+  document.querySelectorAll('.toc-item').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`toc-${key}`);
+  if (btn) btn.classList.add('active');
+
+  const area = document.getElementById('contentArea');
+  area.innerHTML = '<div class="loading-hint"><div class="spinner"></div><p>加载中...</p></div>';
+
+  // 埋点
+  if (typeof track === 'function') track('learn_view', key);
+
+  try {
+    const res = await fetch(`${API}/knowledge/${key}.md`);
+    if (!res.ok) throw new Error('未找到内容');
+    const data = await res.json();
+    area.innerHTML = renderMarkdown(data.content);
+    renderMath(area);
+  } catch(e) {
+    area.innerHTML = `<div class="alert alert-error">加载失败：${e.message}</div>`;
+  }
+}
+
+// ── Markdown 渲染器 ────────────────────────────────────────
+
+function renderMarkdown(md) {
+  const codeBlocks = [];
+
+  // 提取围栏代码块
+  md = md.replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => {
+    codeBlocks.push(code);
+    return `\x00CODE${codeBlocks.length - 1}\x00`;
+  });
+
+  // 提取缩进代码块（每行以 4 空格或 tab 开头的连续行）
+  md = md.replace(/(^|\n\n)((?:(?:    |\t).+\n?)+)/g, (match, prefix, block) => {
+    // 去掉每行前面的 4 空格缩进
+    const code = block.replace(/^(?:    |\t)/gm, '');
+    codeBlocks.push(code);
+    return `${prefix}\x00CODE${codeBlocks.length - 1}\x00`;
+  });
+
+  const paragraphs = md.split(/\n\n+/);
+  const parts = [];
+
+  for (const para of paragraphs) {
+    const trimmed = para.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith('\x00CODE')) {
+      const idx = parseInt(trimmed.match(/\x00CODE(\d+)\x00/)[1]);
+      parts.push(renderCodeBlock(codeBlocks[idx]));
+      continue;
+    }
+
+    const lines = trimmed.split('\n');
+    if (lines.every(l => l.trim().startsWith('|') || isSeparatorRow(l))) {
+      parts.push(parseTable(lines));
+      continue;
+    }
+
+    if (/^#{1,3} /.test(trimmed)) {
+      const headingHtml = trimmed
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>');
+      parts.push(headingHtml);
+      continue;
+    }
+
+    if (/^(\d+\.|[-*]) /.test(trimmed)) {
+      const isOrdered = /^\d+\./.test(trimmed);
+      const tag = isOrdered ? 'ol' : 'ul';
+      const itemLines = trimmed.split('\n').filter(l => l.trim());
+      const items = itemLines.map(l => `<li>${inlineMarkdown(l.replace(/^(\d+\.|[-*]) /, ''))}</li>`).join('');
+      parts.push(`<${tag}>${items}</${tag}>`);
+      continue;
+    }
+
+    if (/^> /.test(trimmed)) {
+      const content = trimmed.replace(/^> /gm, '');
+      parts.push(`<blockquote>${inlineMarkdown(content)}</blockquote>`);
+      continue;
+    }
+
+    // 水平分隔线
+    if (/^-{3,}$/.test(trimmed) || /^\*{3,}$/.test(trimmed)) {
+      parts.push('<hr>');
+      continue;
+    }
+
+    const pLines = trimmed.split('\n').map(l => inlineMarkdown(l));
+    parts.push(`<p>${pLines.join('<br>')}</p>`);
+  }
+
+  return parts.join('\n');
+}
+
+function isSeparatorRow(line) {
+  return /^\|[\s\-:|]+\|$/.test(line.trim());
+}
+
+function parseTable(lines) {
+  const dataRows = lines.filter(l => !isSeparatorRow(l) && l.trim().startsWith('|'));
+  if (dataRows.length === 0) return '';
+
+  const PIPE = '\x01PIPE\x01';
+
+  let html = '<table>';
+  dataRows.forEach((row, i) => {
+    // 将 \| 和 _|_ 替换为占位符，避免被误分割
+    const escaped = row.trim()
+      .replace(/\\\|/g, PIPE)
+      .replace(/_\|_/g, '_' + PIPE + '_');
+    const cells = escaped.replace(/^\||\|$/g, '').split('|');
+    const tag = i === 0 ? 'th' : 'td';
+    const rowHtml = cells.map(c => {
+      const restored = c.replace(/\x01PIPE\x01/g, '|').trim();
+      const content = inlineMarkdown(restored);
+      return `<${tag}>${content}</${tag}>`;
+    }).join('');
+    html += `<tr>${rowHtml}</tr>`;
+  });
+  html += '</table>';
+  return html;
+}
+
+function inlineMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── 代码块智能分类渲染 ─────────────────────────────────────
+
+function renderCodeBlock(code) {
+  const trimmed = code.trim();
+  const lines = trimmed.split('\n');
+
+  // 类型 A：真值表（含 │ 和 ──）
+  if (isTruthTable(lines)) return renderTruthTable(lines);
+
+  // 类型 C：证明步骤（优先检测，因为证明可能含有 ── 分隔线）
+  if (isProofSteps(lines)) return renderProofSteps(lines);
+
+  // 类型 B：推理规则（含 ──── 横线 + 上下公式，总行数 ≤ 8）
+  if (isInferenceRule(lines)) return renderInferenceRule(lines);
+
+  // 类型 D：其他代码块
+  return `<pre><code>${escapeHtml(code)}</code></pre>`;
+}
+
+// ── 类型检测 ────────────────────────────────────────────────
+
+function isTruthTable(lines) {
+  const hasBoxChar = lines.some(l => /│/.test(l));
+  const hasSeparator = lines.some(l => /──/.test(l) && /┼|─/.test(l));
+  return hasBoxChar && hasSeparator;
+}
+
+function isInferenceRule(lines) {
+  if (lines.length > 8) return false;
+  const ruleLineIdx = lines.findIndex(l => /^\s*─{4,}/.test(l));
+  if (ruleLineIdx < 0) return false;
+  // 横线上方至少有一行公式，下方至少有一行公式
+  const above = lines.slice(0, ruleLineIdx).filter(l => l.trim());
+  const below = lines.slice(ruleLineIdx + 1).filter(l => l.trim());
+  if (above.length === 0 || below.length === 0) return false;
+  // 含中文的行说明是带说明的复杂结构，不适合 KaTeX 渲染
+  const hasChinese = [...above, ...below].some(l => /[\u4e00-\u9fff（）]/.test(l));
+  if (hasChinese) return false;
+  return true;
+}
+
+function isProofSteps(lines) {
+  // 严格匹配：需要 "数字. [|] 公式  规则" 且规则在行尾（两个以上空格后）
+  const RULE_KW = /(?:前提|假设|∧-intro|∧-elim_[lr]|∨-intro|∨-elim|→-intro|→-elim|¬-intro|¬-elim|¬¬-intro|¬¬-elim|⊥-elim|MT|RAA|LEM|copy|assumption)/;
+  let numberedCount = 0;
+  let ruleAtEndCount = 0;
+  for (const l of lines) {
+    const t = l.trim();
+    if (/^\d+\.\s+/.test(t)) {
+      numberedCount++;
+      // 规则必须在 2+ 空格后（行尾位置），而非句子中间
+      const parts = t.match(/^(\d+\.)\s+(.+?)\s{2,}(.+)$/);
+      if (parts && RULE_KW.test(parts[3])) ruleAtEndCount++;
+    }
+  }
+  return numberedCount >= 2 && ruleAtEndCount >= 1;
+}
+
+// ── 真值表渲染 ──────────────────────────────────────────────
+
+function renderTruthTable(lines) {
+  // 分离表头行、分隔行、数据行
+  const headerLine = lines.find(l => /│/.test(l) && !/──/.test(l));
+  const dataLines = lines.filter(l => /│/.test(l) && !/──/.test(l));
+
+  if (!headerLine || dataLines.length < 2) {
+    return `<pre><code>${escapeHtml(lines.join('\n'))}</code></pre>`;
+  }
+
+  const parseRow = (line) => line.trim().split('│').map(c => c.trim()).filter(c => c !== '');
+
+  const headers = parseRow(dataLines[0]);
+  const rows = dataLines.slice(1);
+
+  let html = '<table class="truth-table"><thead><tr>';
+  headers.forEach(h => { html += `<th>${escapeHtml(h)}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(row => {
+    const cells = parseRow(row);
+    html += '<tr>';
+    cells.forEach(c => {
+      const cls = c === 'T' ? ' class="val-true"' : c === 'F' ? ' class="val-false"' : '';
+      html += `<td${cls}>${escapeHtml(c)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+// ── 推理规则渲染 ─────────────────────────────────────────────
+
+function renderInferenceRule(lines) {
+  const ruleLineIdx = lines.findIndex(l => /^\s*─{4,}/.test(l));
+  const ruleLine = lines[ruleLineIdx].trim();
+
+  // 转换逻辑符号为 KaTeX
+  const toKatex = (text) => {
+    return text
+      .replace(/\s{2,}/g, ' \\qquad ')
+      .replace(/∧/g, '\\land ')
+      .replace(/∨/g, '\\lor ')
+      .replace(/→/g, '\\to ')
+      .replace(/↔/g, '\\leftrightarrow ')
+      .replace(/¬/g, '\\neg ')
+      .replace(/⊥/g, '\\bot ')
+      .replace(/⊢/g, '\\vdash ')
+      .replace(/\|/g, '\\mid ')
+      .trim();
+  };
+
+  // 检测并排规则（一行中有多个 ──── 段）
+  const ruleSegments = ruleLine.split(/\s{4,}/);
+  const multiRule = ruleSegments.filter(s => /─{4,}/.test(s)).length > 1;
+
+  if (multiRule) {
+    // 并排规则：拆分上方和下方各部分
+    const aboveText = lines.slice(0, ruleLineIdx).map(l => l).join('\n');
+    const belowText = lines.slice(ruleLineIdx + 1).map(l => l).join('\n');
+
+    // 根据横线段的位置分割各列
+    const ruleNames = [];
+    ruleSegments.forEach(seg => {
+      const nameMatch = seg.match(/─+\s+(.+)/);
+      ruleNames.push(nameMatch ? nameMatch[1].trim() : '');
+    });
+
+    // 按大空格分割上方和下方
+    const splitByLargeGap = (text) => text.trim().split(/\s{6,}/).map(s => s.trim()).filter(s => s);
+    const premiseParts = splitByLargeGap(aboveText);
+    const conclusionParts = splitByLargeGap(belowText);
+
+    let html = '<div class="inference-rule-group">';
+    const count = Math.max(premiseParts.length, conclusionParts.length);
+    for (let i = 0; i < count; i++) {
+      const p = premiseParts[i] || '';
+      const c = conclusionParts[i] || '';
+      const name = ruleNames[i] || ruleNames[0] || '';
+      html += '<div class="inference-rule">';
+      html += `<span class="ir-frac" data-katex="\\dfrac{${toKatex(p)}}{${toKatex(c)}}"></span>`;
+      if (name) html += `<span class="ir-name">${escapeHtml(name)}</span>`;
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // 单规则
+  const ruleNameMatch = ruleLine.match(/─+\s+(.+)/);
+  const ruleName = ruleNameMatch ? ruleNameMatch[1].trim() : '';
+
+  const premises = lines.slice(0, ruleLineIdx)
+    .map(l => l.trim()).filter(l => l);
+  const conclusions = lines.slice(ruleLineIdx + 1)
+    .map(l => l.trim()).filter(l => l);
+
+  const premiseLatex = premises.map(p => toKatex(p)).join(' \\qquad ');
+  const conclusionLatex = conclusions.map(c => toKatex(c)).join(' \\qquad ');
+
+  let html = '<div class="inference-rule">';
+  html += `<span class="ir-frac" data-katex="\\dfrac{${premiseLatex}}{${conclusionLatex}}"></span>`;
+  if (ruleName) {
+    html += `<span class="ir-name">${escapeHtml(ruleName)}</span>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+// ── 证明步骤渲染 ─────────────────────────────────────────────
+
+function renderProofSteps(lines) {
+  // ── Pass 1: parse all lines ──
+  const parsed = [];
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    const lineMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+    if (!lineMatch) return;
+
+    const lineNum = lineMatch[1];
+    let rest = lineMatch[2];
+
+    let depth = 0;
+    const depthMatch = rest.match(/^(\|\s*)+/);
+    if (depthMatch) {
+      depth = (depthMatch[0].match(/\|/g) || []).length;
+      rest = rest.replace(/^(\|\s*)+/, '').trim();
+    }
+
+    let formula = rest;
+    let rule = '';
+    const ruleMatch = rest.match(/^(.+?)\s{2,}(.+)$/);
+    if (ruleMatch) {
+      formula = ruleMatch[1].trim();
+      rule = ruleMatch[2].trim();
+    }
+
+    const isPremise = /^前提/.test(rule) || /^premise/i.test(rule);
+    const isAssumption = /^假设/.test(rule) || /^assumption/i.test(rule);
+
+    // Translate Chinese rule names to English (match prover.html)
+    rule = translateProofRule(rule);
+
+    parsed.push({ lineNum, depth, formula, rule, isPremise, isAssumption });
+  });
+
+  // ── Pass 2: render with subproof boundary detection ──
+  let html = '<table class="learn-proof"><tbody>';
+
+  parsed.forEach((p, idx) => {
+    // For each bar (depth level 1..depth), determine if this row
+    // starts or ends a subproof at that level
+    const barInfo = [];
+    for (let d = 1; d <= p.depth; d++) {
+      const isStart = (idx === 0 || parsed[idx - 1].depth < d);
+      const isEnd = (idx === parsed.length - 1 || parsed[idx + 1].depth < d);
+      barInfo.push({ isStart, isEnd });
+    }
+
+    html += `<tr class="proof-line${p.depth > 0 ? ' subproof-depth-' + p.depth : ''}${p.isAssumption ? ' assumption-line' : ''}">`;
+
+    // Line number column
+    html += `<td class="pl-num">${p.lineNum}.</td>`;
+
+    // Subproof bars column with start/end classes
+    let bars = '';
+    for (const bi of barInfo) {
+      let cls = 'subproof-bar';
+      if (bi.isStart) cls += ' bar-start';
+      if (bi.isEnd) cls += ' bar-end';
+      bars += `<span class="${cls}"></span>`;
+    }
+    html += `<td class="pl-bars">${bars}</td>`;
+
+    // Formula column (KaTeX)
+    const formulaKatex = formulaToKatex(p.formula);
+    html += `<td class="pl-formula" data-katex="${escapeHtml(formulaKatex)}"></td>`;
+
+    // Rule column
+    html += `<td class="pl-rule">${formatProofRule(p.rule)}</td>`;
+
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  html = addPremiseSeparator(html);
+  return html;
+}
+
+function formulaToKatex(formula) {
+  return formula
+    .replace(/∧/g, '\\land ')
+    .replace(/∨/g, '\\lor ')
+    .replace(/→/g, '\\to ')
+    .replace(/↔/g, '\\leftrightarrow ')
+    .replace(/¬/g, '\\neg ')
+    .replace(/⊥/g, '\\bot ')
+    .replace(/⊢/g, '\\vdash ')
+    .trim();
+}
+
+function translateProofRule(rule) {
+  if (!rule) return '';
+  // Translate Chinese rule names to match prover.html conventions
+  if (/^前提$/.test(rule)) return 'premise';
+  if (/^假设$/.test(rule)) return 'assumption';
+  // "假设（xxx）" → "assumption (translated)"
+  const assumptionNote = rule.match(/^假设（(.+?)）$/);
+  if (assumptionNote) {
+    const noteMap = {
+      '情况 1': 'case 1', '情况 2': 'case 2',
+      '情况 1a': 'case 1a', '情况 1b': 'case 1b',
+      '→-intro 的子证明': '→-intro sub',
+      'RAA 的子证明': 'RAA sub', 'RAA 子证明': 'RAA sub',
+      '¬-intro 的子证明': '¬-intro sub', '¬-intro 子证明': '¬-intro sub',
+      '外层子证明': 'outer sub', '内层子证明': 'inner sub',
+      '情况 1：左析取成立': 'case 1', '情况 2：R 成立': 'case 2',
+    };
+    const note = noteMap[assumptionNote[1]] || assumptionNote[1];
+    return `assumption (${note})`;
+  }
+  // Descriptive Chinese annotations → empty or reit
+  if (/^（就是假设本身）$/.test(rule)) return 'reit';
+  if (/^（某种推导）$/.test(rule)) return '';
+  if (/^推导过程$/.test(rule)) return '';
+  if (/^得到\s/.test(rule)) return '';
+  if (/^（在假设下推导）$/.test(rule)) return '';
+  if (/^（得到目标后件）$/.test(rule)) return '';
+  if (/^（得到矛盾）$/.test(rule)) return '';
+  if (/^（在情况\s?\d.*得到.*）$/.test(rule)) return '';
+  // Already English — pass through
+  return rule;
+}
+
+function formatProofRule(rule) {
+  if (!rule) return '';
+  // Highlight rule names (English, matching prover.html)
+  return rule.replace(
+    /(∧-intro|∧-elim_[lr]|∨-intro|∨-elim|→-intro|→-elim|¬-intro|¬-elim|¬¬-intro|¬¬-elim|⊥-elim|MT|RAA|LEM|copy|premise|assumption|reit)/g,
+    '<span class="rule-name">$1</span>'
+  );
+}
+
+function addPremiseSeparator(html) {
+  const rows = html.split('</tr>');
+  let lastPremiseIdx = -1;
+  rows.forEach((row, i) => {
+    if (row.includes('>premise<')) lastPremiseIdx = i;
+  });
+  if (lastPremiseIdx >= 0) {
+    rows[lastPremiseIdx] = rows[lastPremiseIdx].replace(
+      'class="proof-line',
+      'class="proof-line premise-sep'
+    );
+  }
+  return rows.join('</tr>');
+}
+
+function renderMath(container) {
+  if (typeof katex === 'undefined') {
+    window.addEventListener('katex-ready', () => renderMath(container), { once: true });
+    return;
+  }
+
+  // 渲染 data-katex 属性（推理规则分数线、证明公式）
+  container.querySelectorAll('[data-katex]').forEach(el => {
+    const tex = el.getAttribute('data-katex');
+    if (!tex) return;
+    const isDisplay = el.classList.contains('ir-frac'); // 推理规则用 display 模式
+    try {
+      katex.render(tex, el, { displayMode: isDisplay, throwOnError: false });
+    } catch(e) {
+      el.textContent = tex;
+    }
+    el.removeAttribute('data-katex');
+  });
+
+  // 渲染内联 $...$ 和 $$...$$ 数学公式
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) textNodes.push(node);
+
+  textNodes.forEach(tn => {
+    const parent = tn.parentNode;
+    if (parent.tagName === 'CODE' || parent.tagName === 'PRE') return;
+    const text = tn.textContent;
+    if (!text.includes('$')) return;
+
+    const parts = [];
+    let last = 0;
+    const re = /\$\$([^$]+?)\$\$|\$([^$\n]+?)\$/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) parts.push(document.createTextNode(text.slice(last, m.index)));
+      const tex = m[1] || m[2];
+      const display = !!m[1];
+      const span = document.createElement('span');
+      try {
+        katex.render(tex, span, { displayMode: display, throwOnError: false });
+      } catch(e) {
+        span.textContent = m[0];
+      }
+      parts.push(span);
+      last = m.index + m[0].length;
+    }
+    if (parts.length === 0) return;
+    if (last < text.length) parts.push(document.createTextNode(text.slice(last)));
+    const frag = document.createDocumentFragment();
+    parts.forEach(p => frag.appendChild(p));
+    parent.replaceChild(frag, tn);
+  });
+}
+
+renderToc();
+loadContent(TOC[0].key);
+</script>
+
+</body>
+</html>

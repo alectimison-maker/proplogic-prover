@@ -1,0 +1,23 @@
+[Unit]
+Description=命题逻辑自然推理系统 FastAPI
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/logic-api
+ExecStart=/opt/logic-api/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8081 --workers 2
+Restart=on-failure
+RestartSec=5s
+Environment=ANTHROPIC_API_KEY=PLACEHOLDER_API_KEY
+
+# 资源限制（服务器 RAM 1.6GB）
+MemoryLimit=300M
+CPUQuota=80%
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=logic-api
+
+[Install]
+WantedBy=multi-user.target
