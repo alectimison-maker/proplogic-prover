@@ -1,6 +1,6 @@
 # 命题逻辑自然推理系统
 
-一个基于自然演绎（Natural Deduction）的命题逻辑学习与验证平台。
+一个基于自然演绎（Natural Deduction）的命题逻辑学习与验证网站：https://logic.jazzzy.cn
 
 ## 项目介绍
 
