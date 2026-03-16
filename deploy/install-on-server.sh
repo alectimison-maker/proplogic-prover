@@ -64,7 +64,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://127.0.0.1:8081/;
+        proxy_pass http://.../;#自己配置
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_read_timeout 30s;
@@ -88,7 +88,7 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/opt/logic-api
-ExecStart=/opt/logic-api/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8081 --workers 2
+ExecStart=/opt/logic-api/venv/bin/uvicorn main:app --host 127.0.0.1 --port ... --workers 2#自己配置端口
 Restart=on-failure
 RestartSec=5s
 Environment=ANTHROPIC_API_KEY=PLACEHOLDER_API_KEY
@@ -117,7 +117,7 @@ fi
 # ── 7. 健康检查 ────────────────────────────────────────
 log "[7/8] 健康检查..."
 sleep 2
-HEALTH=$(curl -s http://127.0.0.1:8081/health 2>/dev/null)
+HEALTH=$(curl -s http://.../health 2>/dev/null)
 if echo "$HEALTH" | grep -q "ok"; then
     log "  API 健康检查通过：$HEALTH"
 else
@@ -146,6 +146,6 @@ echo "访问地址（SSL 成功后）："
 echo "  https://logic.jazzzy.cn"
 echo ""
 echo "验证命令："
-echo "  curl http://127.0.0.1:8081/health"
-echo "  curl http://127.0.0.1:8081/exercises"
+echo "  curl http://.../health"
+echo "  curl http://.../exercises"
 echo "  systemctl status logic-api"
